@@ -1,14 +1,20 @@
 import duckdb
 import time
+import os
 
 class ExactEngine:
     def __init__(self, db_path="data/ecommerce.parquet"):
         self.con = duckdb.connect(database=':memory:')
-        # Using a try-except here so it doesn't crash if the data file isn't generated yet!
+        
+        # BULLETPROOF PATH LOGIC: Get the exact folder this script is in
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        full_path = os.path.join(current_dir, "data", "ecommerce.parquet")
+        
         try:
-            self.con.execute(f"CREATE VIEW transactions AS SELECT * FROM read_parquet('{db_path}')")
-        except duckdb.Error:
-            print(f"Warning: Dataset '{db_path}' not found yet. Generate data first!")
+            self.con.execute(f"CREATE VIEW transactions AS SELECT * FROM read_parquet('{full_path}')")
+            print(f"DuckDB Successfully loaded data from: {full_path}")
+        except duckdb.Error as e:
+            print(f"Warning: Could not load dataset at {full_path}. Error: {e}")
 
     def run_query(self, query_type, column, group_by=None):
         if group_by:
